@@ -71,7 +71,7 @@ describe('AwsInvokeLocal', () => {
     serverless.processedInput = { commands: ['invoke'] };
     provider = new AwsProvider(serverless, options);
     provider.cachedCredentials = {
-      credentials: { accessKeyId: 'foo', secretAccessKey: 'bar' },
+      credentials: { getPromise: async () => null, accessKeyId: 'foo', secretAccessKey: 'bar' },
     };
     serverless.setProvider('aws', provider);
     awsInvokeLocal = new AwsInvokeLocal(serverless, options);
@@ -238,18 +238,19 @@ describe('AwsInvokeLocal', () => {
   });
 
   describe('#getCredentialEnvVars()', () => {
-    it('returns empty object when credentials is not set', () => {
+    it('returns empty object when credentials is not set', async () => {
       provider.cachedCredentials = null;
       serverless.service.provider.credentials = null;
 
-      const credentialEnvVars = awsInvokeLocal.getCredentialEnvVars();
+      const credentialEnvVars = await awsInvokeLocal.getCredentialEnvVars();
 
       expect(credentialEnvVars).to.be.eql({});
     });
 
-    it('returns credential env vars from cached credentials', () => {
+    it('returns credential env vars from cached credentials', async () => {
       provider.cachedCredentials = {
         credentials: {
+          getPromise: async () => {},
           accessKeyId: 'ID',
           secretAccessKey: 'SECRET',
           sessionToken: 'TOKEN',
@@ -257,7 +258,7 @@ describe('AwsInvokeLocal', () => {
       };
       serverless.service.provider.credentials = null;
 
-      const credentialEnvVars = awsInvokeLocal.getCredentialEnvVars();
+      const credentialEnvVars = await awsInvokeLocal.getCredentialEnvVars();
 
       expect(credentialEnvVars).to.be.eql({
         AWS_ACCESS_KEY_ID: 'ID',
@@ -266,15 +267,16 @@ describe('AwsInvokeLocal', () => {
       });
     });
 
-    it('returns credential env vars from credentials config', () => {
+    it('returns credential env vars from credentials config', async () => {
       provider.cachedCredentials = null;
       serverless.service.provider.credentials = {
+        getPromise: async () => {},
         accessKeyId: 'ID',
         secretAccessKey: 'SECRET',
         sessionToken: 'TOKEN',
       };
 
-      const credentialEnvVars = awsInvokeLocal.getCredentialEnvVars();
+      const credentialEnvVars = await awsInvokeLocal.getCredentialEnvVars();
 
       expect(credentialEnvVars).to.be.eql({
         AWS_ACCESS_KEY_ID: 'ID',
@@ -347,6 +349,7 @@ describe('AwsInvokeLocal', () => {
     it('it should set credential env vars #1', async () => {
       provider.cachedCredentials = {
         credentials: {
+          getPromise: async () => {},
           accessKeyId: 'ID',
           secretAccessKey: 'SECRET',
         },
@@ -361,6 +364,7 @@ describe('AwsInvokeLocal', () => {
     it('it should set credential env vars #2', async () => {
       provider.cachedCredentials = {
         credentials: {
+          getPromise: async () => {},
           sessionToken: 'TOKEN',
         },
       };
